@@ -185,12 +185,13 @@ class _NotesScreenState extends State<NotesScreen> {
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (snapshot.data!.isEmpty) {
-                  return ListView(
-                    children: const [
-                      NoteTile(
-                        text: 'Try adding a note by clicking the + button.',
-                      ),
-                    ],
+                  return Padding(
+                    padding: const EdgeInsets.all(25.0),
+                    child: Text('Try adding a note by clicking the + button.',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                          fontSize: 18,
+                        )),
                   );
                 } else {
                   return ListView.builder(
