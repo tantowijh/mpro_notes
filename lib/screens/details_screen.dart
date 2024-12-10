@@ -21,6 +21,7 @@ class NotesDetailPageState extends State<NotesDetailPage> {
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController contentController = TextEditingController();
+  final FocusNode titleFocusNode = FocusNode();
 
   String? initialTitle;
   String? initialContent;
@@ -36,6 +37,9 @@ class NotesDetailPageState extends State<NotesDetailPage> {
     }
     titleController.addListener(_onTextChanged);
     contentController.addListener(_onTextChanged);
+    if (widget.note == null) {
+      titleFocusNode.requestFocus();
+    }
   }
 
   @override
@@ -44,6 +48,7 @@ class NotesDetailPageState extends State<NotesDetailPage> {
     contentController.removeListener(_onTextChanged);
     titleController.dispose();
     contentController.dispose();
+    titleFocusNode.dispose();
     super.dispose();
   }
 
@@ -184,6 +189,7 @@ class NotesDetailPageState extends State<NotesDetailPage> {
           children: [
             TextField(
               controller: titleController,
+              focusNode: titleFocusNode,
               decoration: InputDecoration(
                 hintText: 'Title',
                 border: InputBorder.none,
