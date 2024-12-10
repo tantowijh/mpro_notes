@@ -7,6 +7,7 @@ ThemeData lightMode = ThemeData(
     primary: Colors.grey.shade200,
     secondary: Colors.grey.shade400,
     inversePrimary: Colors.grey.shade800,
+    error: Colors.red.shade400,
   ),
   textSelectionTheme: TextSelectionThemeData(
     cursorColor: Colors.black,
@@ -22,6 +23,7 @@ ThemeData darkMode = ThemeData(
     primary: Colors.grey.shade800,
     secondary: Colors.grey.shade700,
     inversePrimary: Colors.grey.shade300,
+    error: Colors.red.shade700,
   ),
   textSelectionTheme: TextSelectionThemeData(
     cursorColor: Colors.white,

@@ -17,14 +17,29 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+      'title', aliasedName, false,
+      additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 30),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
   static const VerificationMeta _contentMeta =
       const VerificationMeta('content');
   @override
   late final GeneratedColumn<String> content = GeneratedColumn<String>(
       'content', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
   @override
-  List<GeneratedColumn> get $columns => [id, content];
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns => [id, title, content, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -38,11 +53,21 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
+    if (data.containsKey('title')) {
+      context.handle(
+          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
     if (data.containsKey('content')) {
       context.handle(_contentMeta,
           content.isAcceptableOrUnknown(data['content']!, _contentMeta));
     } else if (isInserting) {
       context.missing(_contentMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
     return context;
   }
@@ -55,8 +80,12 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
     return Note(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      title: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       content: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}content'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
   }
 
@@ -68,20 +97,30 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
 
 class Note extends DataClass implements Insertable<Note> {
   final int id;
+  final String title;
   final String content;
-  const Note({required this.id, required this.content});
+  final DateTime createdAt;
+  const Note(
+      {required this.id,
+      required this.title,
+      required this.content,
+      required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
     map['content'] = Variable<String>(content);
+    map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
 
   NotesCompanion toCompanion(bool nullToAbsent) {
     return NotesCompanion(
       id: Value(id),
+      title: Value(title),
       content: Value(content),
+      createdAt: Value(createdAt),
     );
   }
 
@@ -90,7 +129,9 @@ class Note extends DataClass implements Insertable<Note> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Note(
       id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
       content: serializer.fromJson<String>(json['content']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
   @override
@@ -98,18 +139,26 @@ class Note extends DataClass implements Insertable<Note> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
       'content': serializer.toJson<String>(content),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
 
-  Note copyWith({int? id, String? content}) => Note(
+  Note copyWith(
+          {int? id, String? title, String? content, DateTime? createdAt}) =>
+      Note(
         id: id ?? this.id,
+        title: title ?? this.title,
         content: content ?? this.content,
+        createdAt: createdAt ?? this.createdAt,
       );
   Note copyWithCompanion(NotesCompanion data) {
     return Note(
       id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -117,44 +166,67 @@ class Note extends DataClass implements Insertable<Note> {
   String toString() {
     return (StringBuffer('Note(')
           ..write('id: $id, ')
-          ..write('content: $content')
+          ..write('title: $title, ')
+          ..write('content: $content, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, content);
+  int get hashCode => Object.hash(id, title, content, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Note && other.id == this.id && other.content == this.content);
+      (other is Note &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.content == this.content &&
+          other.createdAt == this.createdAt);
 }
 
 class NotesCompanion extends UpdateCompanion<Note> {
   final Value<int> id;
+  final Value<String> title;
   final Value<String> content;
+  final Value<DateTime> createdAt;
   const NotesCompanion({
     this.id = const Value.absent(),
+    this.title = const Value.absent(),
     this.content = const Value.absent(),
+    this.createdAt = const Value.absent(),
   });
   NotesCompanion.insert({
     this.id = const Value.absent(),
+    required String title,
     required String content,
-  }) : content = Value(content);
+    this.createdAt = const Value.absent(),
+  })  : title = Value(title),
+        content = Value(content);
   static Insertable<Note> custom({
     Expression<int>? id,
+    Expression<String>? title,
     Expression<String>? content,
+    Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (title != null) 'title': title,
       if (content != null) 'content': content,
+      if (createdAt != null) 'created_at': createdAt,
     });
   }
 
-  NotesCompanion copyWith({Value<int>? id, Value<String>? content}) {
+  NotesCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? title,
+      Value<String>? content,
+      Value<DateTime>? createdAt}) {
     return NotesCompanion(
       id: id ?? this.id,
+      title: title ?? this.title,
       content: content ?? this.content,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -164,8 +236,14 @@ class NotesCompanion extends UpdateCompanion<Note> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
     if (content.present) {
       map['content'] = Variable<String>(content.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
     }
     return map;
   }
@@ -174,7 +252,9 @@ class NotesCompanion extends UpdateCompanion<Note> {
   String toString() {
     return (StringBuffer('NotesCompanion(')
           ..write('id: $id, ')
-          ..write('content: $content')
+          ..write('title: $title, ')
+          ..write('content: $content, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -193,11 +273,15 @@ abstract class _$NoteDatabase extends GeneratedDatabase {
 
 typedef $$NotesTableCreateCompanionBuilder = NotesCompanion Function({
   Value<int> id,
+  required String title,
   required String content,
+  Value<DateTime> createdAt,
 });
 typedef $$NotesTableUpdateCompanionBuilder = NotesCompanion Function({
   Value<int> id,
+  Value<String> title,
   Value<String> content,
+  Value<DateTime> createdAt,
 });
 
 class $$NotesTableFilterComposer extends Composer<_$NoteDatabase, $NotesTable> {
@@ -211,8 +295,14 @@ class $$NotesTableFilterComposer extends Composer<_$NoteDatabase, $NotesTable> {
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get content => $composableBuilder(
       column: $table.content, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$NotesTableOrderingComposer
@@ -227,8 +317,14 @@ class $$NotesTableOrderingComposer
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get content => $composableBuilder(
       column: $table.content, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$NotesTableAnnotationComposer
@@ -243,8 +339,14 @@ class $$NotesTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
   GeneratedColumn<String> get content =>
       $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$NotesTableTableManager extends RootTableManager<
@@ -271,19 +373,27 @@ class $$NotesTableTableManager extends RootTableManager<
               $$NotesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
+            Value<String> title = const Value.absent(),
             Value<String> content = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
           }) =>
               NotesCompanion(
             id: id,
+            title: title,
             content: content,
+            createdAt: createdAt,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
+            required String title,
             required String content,
+            Value<DateTime> createdAt = const Value.absent(),
           }) =>
               NotesCompanion.insert(
             id: id,
+            title: title,
             content: content,
+            createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

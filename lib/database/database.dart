@@ -5,7 +5,9 @@ part 'database.g.dart';
 
 class Notes extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get title => text().withLength(max: 30)();
   TextColumn get content => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 @DriftDatabase(tables: [Notes])
