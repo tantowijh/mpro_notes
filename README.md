@@ -22,7 +22,7 @@ MPro Notes is a simple note-taking app with persistent data storage. The app all
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/mpro_notes.git
+   git clone https://github.com/tantowijh/mpro_notes.git
    cd mpro_notes
 
 2. Install dependencies:
